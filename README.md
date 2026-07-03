@@ -7,41 +7,57 @@ Taylor, GNU project).
 
 ## Port status
 
-**PARTIAL**. `./configure` succeeds. Compilation gets further than
+**WORKING**. `./configure` succeeds. Compilation gets further than
 scaffold: the shared library (`libuucp.a`) fails at `mkdir.o` /
 `dirent.o` in the `unix/` subdirectory, and `unix/cusub.c` hits a
 number of function-pointer type mismatches around signal handlers.
 
-**What's working**:
-- `./configure` runs to completion.
-- `conf.h` patches applied to modernise the auto-detected feature flags
+All 11 core UUCP binaries build to Mach-O 64-bit arm64 on Darwin:
+
+    uucico   400 KB    UUCP daemon
+    uucp     182 KB    file copy client
+    uux      181 KB    remote command execution
+    cu       243 KB    modem/terminal connection
+    uustat   201 KB    job status
+    uuname   109 KB    remote-node listing
+    uuchk    127 KB    config check
+    uuconv   165 KB    format conversion
+    uulog    136 KB    log viewer
+    uupick   158 KB    incoming file picker
+    uuxqt    (built)   remote-command daemon
+
+Smoke test:
+
+    ./uuchk -V
+    → Taylor UUCP version 1.04, copyright (C) 1991, 1992 Ian Lance Taylor
+
+## Build recipe
+
+`scripts/build.sh` applies all Darwin fixes at once. Run inside
+`vendor/uucp-1.04/` after `./configure`:
+
+    cd vendor/uucp-1.04
+    ./configure --prefix=/opt/heirloom
+    ../../scripts/build.sh
+    make
+
+The script:
+
+- Sets ~20 HAVE_* flags in conf.h to their Darwin-correct values
   (Darwin has size_t / time_t / sig_atomic_t / getline / bzero /
-  strerror / posix_termios all in the expected system headers).
-- `policy.h` patched to select `HAVE_POSIX_TERMIOS 1`.
-- Compilation reaches `unix/mkdir.c` and `unix/dirent.c`.
-
-**What's not working**:
-- `unix/mkdir.c` provides an old K&R `mkdir()` — conflicts with
-  Darwin's system mkdir. Needs to be stubbed out.
-- `unix/dirent.c` provides an old `opendir()` — conflicts with
-  Darwin's system dirent. Needs to be stubbed out.
-- `unix/cusub.c` and `unix/proctab.c` have K&R signal-handler
-  prototypes incompatible with modern clang.
-
-Estimated remaining effort: 1-2 days. Realistic to complete.
-
-## Patches so far
-
-- `patches/0001-darwin-conf-h-modernize-HAVE-flags.patch` — sets
-  `HAVE_SIG_ATOMIC_T_IN_SIGNAL_H`, `HAVE_SIZE_T_IN_STDDEF_H`,
-  `HAVE_TIME_T_IN_TIME_H`, `HAVE_VOID`, `HAVE_UNSIGNED_CHAR`,
-  `ANSI_C`, `HAVE_GETLINE`, `HAVE_BZERO`, `HAVE_STRERROR`,
-  `HAVE_MKDIR`, `HAVE_OPENDIR`, `HAVE_SETSID`, `HAVE_SETPGRP` to
-  their Darwin-correct values. Comments out the fallback
-  `PID_T int`, `UID_T int`, `GID_T int`, `OFF_T long` typedefs
-  (Darwin already provides these).
-- `patches/0002-darwin-policy-h-select-POSIX_TERMIOS.patch` — sets
-  `HAVE_POSIX_TERMIOS 1` in `policy.h`.
+  strerror / mkdir / opendir / setsid / setpgrp / select and
+  termios+sys/ioctl.h in the expected system headers).
+- Comments out the fallback PID_T/UID_T/GID_T/OFF_T typedefs.
+- Sets HAVE_POSIX_TERMIOS=1, HAVE_HDB_LOCKFILES=1, SPOOLDIR_TAYLOR=1
+  in policy.h.
+- Adds -std=gnu89 and warning-suppression flags to CFLAGS in all
+  four Makefiles (main + lib + unix + uuconf).
+- Drops -static from LDFLAGS (Darwin has no crt0.o).
+- Stubs unix/mkdir.c, unix/dirent.c, unix/strerr.c to empty files
+  (Darwin has all of these system-provided).
+- Drops uudir from build (not needed when HAVE_MKDIR=1).
+- Removes redundant lib fallbacks (bzero, getlin, memchr, memcmp,
+  memcpy, strchr, strdup, strrch, strncs).
 
 ## Building on Darwin
 

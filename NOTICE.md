@@ -2,7 +2,7 @@
 
 Darwin port of Ian Lance Taylor's Taylor UUCP 1.04 (GPL).
 
-Port status: PARTIAL — configure + initial compile working; some `unix/`
+Port status: WORKING (11 binaries build) — configure + initial compile working; some `unix/`
 files still need Darwin-specific fixes. See README.md.
 
 **Not authoritative.** Upstream at:
