@@ -7,12 +7,7 @@ Taylor, GNU project).
 
 ## Port status
 
-**WORKING**. `./configure` succeeds. Compilation gets further than
-scaffold: the shared library (`libuucp.a`) fails at `mkdir.o` /
-`dirent.o` in the `unix/` subdirectory, and `unix/cusub.c` hits a
-number of function-pointer type mismatches around signal handlers.
-
-All 11 core UUCP binaries build to Mach-O 64-bit arm64 on Darwin:
+**WORKING**. All 11 core UUCP binaries build to Mach-O 64-bit arm64 on Darwin:
 
     uucico   400 KB    UUCP daemon
     uucp     182 KB    file copy client
